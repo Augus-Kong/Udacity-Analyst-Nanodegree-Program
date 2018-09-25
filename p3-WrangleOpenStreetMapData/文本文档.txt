@@ -1,0 +1,6 @@
+Seattle,WA, United States
+https://mapzen.com/data/metro-extracts/metro/seattle_washington/ 
+我选择西雅图地区有两个原因，第一点是因为自己喜欢这个充满艺术气息的城市，同时又是高科技城，想要通过这个数据分析项目增加对这个城市的了解，第二点原因是为了避免选择中国的城市产生中文对数据处理增加麻烦。
+
+我在这个项目完成过程中参考了 
+纳米学位论坛的帖子，python文档，菜鸟教程，廖雪峰的python教程以及其它的一些国外博客

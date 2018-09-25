@@ -1,0 +1,569 @@
+
+#白葡萄酒数据集的变量分析作业
+========================================================
+
+## 通过12个变量来研究白葡萄酒的性质和质量评分标准之间的相互关系。
+
+###数据集基本信息
+```{r global_options, include=FALSE} 
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+
+library(ggplot2)
+```
+
+
+```{r echo=FALSE, Load_the_Data}
+whitewine = read.csv("wineQualityWhites.csv") 
+names(whitewine)
+dim(whitewine)
+attach(whitewine) #使用attach()命令 简化代码 - 省略数据集的输入
+```
+
+葡萄酒的主要成分|葡萄酒中的杂质|葡萄酒的评价指标
+---| ---| ---
+**alcohol**|sulphates|**quality**
+fixed.acidity|citric.acid|pH
+volatile.acidity|chlorides|density
+**residual.sugar**|
+|**total.sulfur.dioxide**
+|free.sulfur.dioxide
+
+###主要因子的基本统计数据信息
+```{r echo = FALSE, 主要因子summary}
+main.factor <- data.frame(alcohol, quality, residual.sugar, total.sulfur.dioxide)
+summary(main.factor)
+
+```
+
+```{r echo = FALSE, 杂质summary}
+impurity.factor <- data.frame(sulphates, citric.acid, chlorides)
+summary(impurity.factor)
+```
+
+
+```{r echo=FALSE, echo=FALSE}
+his.plot <- function(feature) {
+    ggplot(data=whitewine, aes_string(x = feature)) + geom_histogram() 
+}
+#定义利用 whitewine 数据集绘制直方图的新函数 his.plot 注意aes_string 函数的使用
+
+```
+
+```{r echo=FALSE, mytheme}
+mytheme <- theme(plot.title = 
+                  element_text(face = "bold.italic", size = "14", color = "brown"), 
+                 axis.title =
+                   element_text(face = "bold.italic", size = "10", color = "brown"),
+                 axis.text = 
+                   element_text(face = "bold", size = 9, color = "darkblue"),
+                 panel.background = element_rect(fill = "white", color = "darkblue"),
+                 panel.grid.major.y = element_line(color = "grey", linetype = 1),
+                 panel.grid.minor.y = element_line(color = "grey", linetype = 2),
+                 panel.grid.minor.x = element_blank(), 
+                 legend.position = "top")
+
+```
+
+
+###Univariate Plots Section
+```{r echo=FALSE, total.sulfur.dioxide}
+ his.total.sulfur.dioxide <- ggplot(aes(x= total.sulfur.dioxide), data = whitewine) + 
+  geom_histogram(binwidth = 2) +
+  xlab("total.sulfur.dioxide(mg / dm^3)") +
+  ggtitle("Distribution of total.sulfur.dioxide") +
+  mytheme
+
+```
+####大部分的白葡萄酒总二氧化硫含量位于100-200的区间范围内(1st.Q 值为108， 3rd.Q值为167），并且接近正态分布。
+
+```{r echo = FALSE, fixed.acidity}
+his.fixed.acidity <- his.plot("fixed.acidity") + 
+  ggtitle("distribution of fixed.acidity") +
+  xlab("fixed.acidity (g / dm^3)") +
+  mytheme
+
+```
+####固定酸含量集中在6-8之间，图像接近**正态分布**
+
+```{r echo=FALSE, volatile.acidity}
+
+  his.volatile.acidity <- his.plot("volatile.acidity") +
+  ggtitle("Distribution of volatile.acidity") +
+  xlab("volatile.acidity (g / dm^3)") +
+  mytheme
+```
+####挥发酸的值整体偏低，大部分的葡萄酒挥发酸的浓度在 0.15-0.45 之间
+
+```{r echo=FALSE, acidity.ratio}
+  whitewine$acidity.ratio <- volatile.acidity/fixed.acidity 
+#在whitewine dataframe数据集中添加一个 acidity_ratio 新变量 
+  his.acidity.ratio <- his.plot("acidity.ratio") +
+  ggtitle("Distibution of volatile/fixed acidity ration") +
+  mytheme
+```
+####探究挥发酸与固体酸的比率来判定挥发性酸与固定酸是否存在一定的相关性，通过绘图发现相关性并不明显，没有出现集中分布的趋势，说明挥发性酸可能不仅由固定酸的含量来决定。 
+
+```{r echo=FALSE, residual.sugar}
+his.residual.sugar <- his.plot("residual.sugar") + xlim(0,30) +
+  ggtitle("Distribution of residual.sugar") + 
+  xlab("residual.sugar (g/dm^3)") +
+  mytheme
+#使用 xlim() 命令来舍去异常值
+```
+
+
+####剩余糖含量呈现偏斜分布，大部分的葡萄酒发酵比较充分，糖含量较低，但也有部分的葡萄酒有较高的糖含量，分析可能是由于为了不同的葡萄酒类型和口感而人为控制发酵的程度，保留了较多的糖分。
+
+```{r echo=FALSE, alcohol}
+his.alcohol <- his.plot("alcohol")+ xlim(7,15) +
+  ggtitle("Distribution of alcohol") + 
+  xlab("alcohol (% by volume)") +
+  mytheme
+```
+####酒精含量的分布较为分散，分析可能是为了制造不同酒精度的葡萄酒而刻意为之，控制了酒精的含量，来迎合更多人的口味。
+
+```{r echo = FALSE, quality}
+his.quality <- his.plot("quality") +
+  ggtitle("Distribution of quality") + 
+  xlab("quality ( score between 0 and 10)") +
+  mytheme
+
+```
+####quality变量全部是整数，服从正态分布，因为高质量的葡萄酒很少 考虑到sugar含量以及挥发性酸的含量很高的酒的数量也很少，猜测这几个变量之间会不会存在一定的相关性？将这几个图片进行汇总整理。
+
+
+
+```{r echo=FALSE, echo=FALSE}
+
+library(gridExtra)
+grid.arrange(his.volatile.acidity, his.alcohol, his.residual.sugar, his.quality,
+             ncol = 2)
+```
+
+
+
+```{r echo=FALSE, pH}
+  his.pH <- his.plot("pH") +
+  ggtitle("Distribution of pH") + 
+  mytheme
+
+```
+####全部的葡萄酒均显酸性，pH的大小会与sulfur的含量， sulphates 的含量存在相关性，且pH值分布曲线接近**正态分布**
+
+```{r echo= FALSE, echo=FALSE}
+  his.plot("chlorides") +
+  ggtitle("Distribution of chlorides") + 
+  xlab("chlorides (g/dm^3)") +
+  mytheme
+```
+
+####氯化物的含量较低，绝大部分的葡萄酒中的氯化物含量低于0.1，应该属于葡萄酒中的杂质。
+
+```{r echo=FALSE}
+his.sulphates <- his.plot("sulphates") +
+  ggtitle("Distribution of sulphates") + 
+  xlab("sulphates (g/dm^3)") + 
+  mytheme
+```
+
+####硫酸盐的含量分布曲线与总的二氧化硫值的分布曲线相类似，均呈现正态分布。初步判断两者之间存在一定的相关关系。
+
+```{r echo=FALSE, sulfur.ratio}
+whitewine$sulfur.ratio <- (sulphates/total.sulfur.dioxide)
+  his.sulfur.ratio <- his.plot("sulfur.ratio") +
+  ggtitle("Distribution of sulfur.ratio") +
+  mytheme
+```
+
+
+```{r echo = FALSE, echo=FALSE}
+grid.arrange(his.total.sulfur.dioxide, his.sulphates, his.sulfur.ratio, ncol = 2 )
+
+```
+####绘制了硫酸盐与二氧化硫含量的比例关系，发现曲线集中分布在0-0.01 的区间范围内，说明两者存在相关性。
+
+```{r echo=FALSE, density}
+  his.plot("density") +
+  ggtitle("Distribution of density") + 
+  xlab("density (g/cm^3)") +
+  mytheme
+```
+
+
+
+
+## Univariate Analysis
+
+### What is the structure of your dataset?
+白葡萄酒数据集总共有12个变量，可以分为葡萄酒主要成分，葡萄酒中杂质，葡萄酒的评价指标三大类，同时根据葡萄酒的酿造过程，可以单独分出4个主要变量，quality，residual.sugar, alchohol, total.sulfur.dioxide 其中**quality**变量为结论性的变量。
+
+所有的葡萄酒均呈现酸性，且酸性很强pH <4
+多数葡萄酒的quality评分在 5-7.5 之间
+去除大于300的异常值之后，二氧化硫总量的median值为134，最小值在9.0，分布范围很广泛，可能与制造工艺相关。
+
+### What is/are the main feature(s) of interest in your dataset?
+total.sulfur.dioxide, residual.sugar, alcohol 以及 quality是主要变量，二氧化硫是一种抗氧化剂，制造工艺越高的酒庄会添加越少量的二氧化硫，所以葡萄酒的品质也会更高。 resisual.sugar会影响葡萄酒的甜度，挥发性酸会决定葡萄酒的香气，酒精含量会影响葡萄酒的口感和味道，quality分数是对葡萄酒的整体评价。
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+citric.acid chlorides sulphates 均可以看做葡萄酒中的杂质，可能会影响到葡萄酒的质量评分。
+quality变量全部是整数，服从正态分布，因为高质量的葡萄酒很少 考虑到sugar含量以及挥发性酸的含量很高的酒的数量也很少，猜测这几个变量之间存在相关性
+
+### Did you create any new variables from existing variables in the dataset?
+创造了新的挥发性与沉淀酸的比例，探究挥发性物质的占比。
+设定新的sulphates/total.sulfur.dioxide变量来确认sulphates与total.sulfur.dioxide的相关性。
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+在挥发性酸，存在>0.9 的异常值，酒精含量为8，密度为1.01的异常值，质量评分<4的 极端异常值，这些值均是描述了同一瓶葡萄酒？ 
+
+
+
+### Bivariate Plots Section
+```{r echo=FALSE, echo=FALSE}
+
+library(psych)
+pairs.panels(whitewine[, c(2:13)],pch = ".")
+#绘制所有变量的相关性矩阵
+```
+
+####从相关性图表中可以看出density 和residual sugar 这两个变量之间存在着较强的相关关系，相关关系达到0.84,total sulfur dioxide与free sulfur dioxide之间相关关系达到0.62,quality和alcohol之间的相关关系达到0.44，
+```{r echo=FALSE, cut }
+#使用cut()函数将连续变量将quality切割为离散变量,
+whitewine$quality.bucket <- cut(quality, c(3,5,7,9))
+```
+
+```{r echo=FALSE}
+ggplot(aes(x = alcohol, y = quality), data = subset(whitewine, alcohol > 8)) +
+  geom_point(alpha = 1/20) + 
+  geom_smooth() +
+  ggtitle("alcohol与quality的关系") + 
+  xlab("alcohol (% by volume)") +
+  ylab("quality ( score between 0 and 10)") +
+  mytheme
+```
+####近似的回归曲线斜率为正值，表示酒精含量与quality之间存在正相关的关系，能够利用酒精含量粗略评估葡萄酒的质量。
+
+
+```{r echo=FALSE}
+ggplot(aes(x = total.sulfur.dioxide, y = free.sulfur.dioxide), 
+       data = subset(whitewine, total.sulfur.dioxide < 300)) +
+  geom_point(alpha = 1/5) + 
+  ggtitle("二氧化硫总量与游离态的二氧化硫关系") +
+  geom_smooth() + 
+  xlab("total.sulfur.dioxide (mg/dm^3)") +
+  ylab("free.sulfur.dioxide (mg/dm^3)") +
+  mytheme
+```
+
+####通过绘图发现，total.sulfur.dioxide与 free.sulfur.dioxide 存在正相关性。
+
+```{r echo = FALSE}
+
+ggplot(aes(x = total.sulfur.dioxide, y = sulphates ), 
+       data = subset(whitewine, total.sulfur.dioxide < 300)) + 
+  geom_point(alpha = 1/5) +
+  ggtitle("sulphates与total.sulfur.dioxide关系") +
+  geom_smooth() +
+  xlab("total.sulfur.dioxide (mg/dm^3)") +
+  ylab("sulphates (g/dm^3)")
+  mytheme
+```
+
+#### 绘图发现 sulphates 与 total.sulfur.dioxide 之间的相关性不明显，回归接近水平。
+
+
+###与pH相关的数据整理
+
+```{r echo=FALSE, echo=FALSE}
+ggplot(aes(x = fixed.acidity, y = pH), data = whitewine) + 
+  geom_point(alpha = 1/10) +
+  ggtitle("固定酸与pH的关系") + 
+  xlab("fixed.acidity (g/dm^3)") +
+  mytheme
+  
+ggplot(aes(x = citric.acid, y = pH), data = whitewine) + 
+  geom_point(alpha = 1/10) +
+  ggtitle("柠檬酸与pH的关系") +
+  xlab("citric.acid (g/dm^3)") +
+  mytheme
+
+cor.test(whitewine$citric.acid, whitewine$pH)
+```
+####根据图像显示，没有发现明显的相关关系
+
+```{r echo=FALSE}
+ggplot(aes(x = total.sulfur.dioxide, y = pH), data = whitewine) + 
+  geom_point(alpha = 1/5) +
+  ggtitle("二氧化硫总量与pH关系") +
+  xlab("total.sulfur.dioxide (mg/dm^3)") +
+  mytheme
+
+```
+
+####根据相关系数矩阵发现二氧化硫总量与pH的相关关系为0，通过图像得到验证，在二氧化硫总量 与pH的关系图中数据点呈现近乎完全分散的随机分布
+
+```{r echo=FALSE}
+ggplot(aes(x = chlorides, y = pH), data = whitewine) + 
+  geom_point(alpha = 1/5) +
+  ggtitle("氯化物含量与pH关系") +
+  xlab("chlorides (g/dm^3)") +
+  mytheme
+```
+
+###与density相关的数据整理
+
+```{r echo=FALSE}
+ggplot(aes(x = alcohol, y = density), data = whitewine) + 
+  geom_point(alpha = 1/5) +
+  ggtitle("酒精含量与密度的关系") +
+  xlab("alcohol (% by volume)") +
+  ylab("density (g/cm^3)") +
+  mytheme
+```
+
+####酒精含量越高，密度越低，因为酒精密度接近0.8，小于水的密度（1.0）
+
+```{r echo=FALSE}
+ggplot(aes(x = residual.sugar, y = density), 
+       data = subset(whitewine, residual.sugar<30)) + 
+  geom_point(alpha = 0.5) +
+  geom_smooth(se = FALSE) +
+  ggtitle("剩余糖含量与密度的关系") +
+  xlab("residual.sugar (g / dm^3)") +
+  ylab("density (g / cm^3)") +
+  mytheme
+
+```
+
+####剩余的糖分为固体杂志，密度大于酒精和水，使得糖含量越高的葡萄酒密度越大。
+
+```{r echo = FALSE, echo=FALSE}
+
+ggplot(subset(whitewine, quality.bucket != is.na(quality.bucket)), 
+       aes(x = alcohol, fill = quality.bucket)) +
+  geom_density(alpha = 0.3) +
+  xlab("alcohol (% by volume)") +
+  ylab("density (g/cm^3)") +
+  mytheme 
+```
+
+####从quality 与 alcohol 的密度关系图中可以发现，质量评分较高的葡萄酒的酒精浓度也较高，呈现一定的相关性，可能因为酒精含量越高的葡萄酒所需要的发酵时间更长，反应更加充分，所以品质较好。
+
+
+```{r echo=FALSE}
+
+#箱形图验证酒精的含量与葡萄酒质量评级之间的关系
+ggplot(aes(x = quality.bucket, y = alcohol), 
+      data = subset(whitewine, quality.bucket != is.na(quality.bucket))) +
+  geom_boxplot(fill = "cornflowerblue", color = "black", notch = TRUE)+
+  geom_rug(side = "1", color = "black")  + 
+  ggtitle("alcohol 与quality 关系") + #在图形的侧边创建地毯图
+  xlab("quality ( score between 0 and 10)") +
+  ylab("alcohol (% by volume)") +
+  mytheme
+
+by(whitewine$alcohol, whitewine$quality.bucket, summary)
+
+```
+
+####从箱线图中可以看出，评分较高的葡萄酒的total.sulfur.dioxide浓度较低.但也同时注意到评分较低的葡萄酒中也存在total.sulfur.dioxide浓度很低的，可能是由于不同葡萄酒的生产者采用了不同sulfur.dioxide的吸收处理工艺导致，sulfur.dioxide的值不能作为推断quality的可靠依据。
+
+## Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+糖含量与密度有较明显的关系，
+酒精含量增加会使得葡萄酒的质量评级增加
+二氧化硫含量与葡萄酒评级的关系不明显
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+pH 与total.sulfur.dioxide 的相关系数为0 ，与sulfur.dioxide 显酸性的化学常识不相符。
+### What was the strongest relationship you found?
+density 与 residual.sugar之间的相关关系最强，residual.sugar 为固体的sugar杂志，密度大于液体的酒精，所以residual.sugar的含量越大，密度越高。
+
+
+
+### Multivariate Plots Section
+```{r echo = FALSE, echo=FALSE}
+whitewine$SO2.bucket <- cut(total.sulfur.dioxide, c(0,50,100,150,200,250))
+
+ggplot(data = subset(whitewine, free.sulfur.dioxide < 200),
+       aes(x = free.sulfur.dioxide, y = sulphates ,color = SO2.bucket)) +
+  xlim(0, 100) +
+  geom_point(alpha = 1/2) +
+  xlab("free.sulfur.dioxide (mg/dm^3)") +
+  ylab("sulphates (g/dm^3)") +
+  scale_color_brewer("RdBu") +
+  mytheme
+
+```
+
+####根据散点图可以看出 total.sulfur.dioxide 与free.sulfur.dioxide 以及sulphates三者之间的相关性，当二氧化硫总量较低时，自由态的二氧化碳和硫酸盐含量也较低，集中在图形的左下角，当二氧化硫总量较高时，对自由态的二氧化硫含量影响较大，有明显的增长，而对硫酸盐的影响较小，增加幅度不明显。
+
+```{r echo = FALSE, echo=FALSE}
+ggplot(data = subset(whitewine, free.sulfur.dioxide < 200),
+       aes(x = alcohol, y = residual.sugar ,color = SO2.bucket)) +
+  geom_point() +
+  ylim(0,20) +
+  xlab("alcohol (% by volume)") +
+  ylab("residual.sugar (g/dm^3)") +
+  scale_color_brewer("RdBu") +
+  mytheme
+```
+
+####葡萄酒的是由葡萄汁发酵而成的，葡萄汁中有大量的糖分，在发酵过程中酵母菌将其转化为酒精。所以发酵越充分，转化越完全，成品中酒精越多，糖就越少。 sulfur dioxide 起到一个氧化剂的作用，氧化剂的含量是否会影响发酵的效率是关注的问题。
+
+```{r echo = FALSE, 四个主要变量之间的关系}
+ggplot(data = subset(whitewine, residual.sugar < 30 & total.sulfur.dioxide < 300 & 
+                       quality.bucket != is.na(quality.bucket)), 
+       aes(x = residual.sugar, y = total.sulfur.dioxide)) +
+  facet_grid(.~quality.bucket) +
+  geom_point(alpha = 1/5) +
+  ggtitle("三个主要变量之间的关系") +
+  xlab("residual.sugar (g/dm^3)") +
+  ylab("total.sulfur.dioxide (mg/dm^3)") +
+  mytheme
+```
+
+####不同quality的total.sulfur.dioxide 与 residual.sugar的散点图分布近乎一致。
+
+```{r echo=FALSE }
+
+den.sugar <- ggplot(data = subset(whitewine, residual.sugar < 30 & 
+                                    total.sulfur.dioxide < 300 & 
+                       quality.bucket != is.na(quality.bucket)),
+       aes(x = residual.sugar, fill = quality.bucket)) +
+  geom_density() +
+  facet_grid(.~quality.bucket) +
+  xlab("residual.sugar (g/dm^3)") +
+  mytheme
+
+den.sulfur <- ggplot(data = subset(whitewine, residual.sugar < 30 & 
+                                     total.sulfur.dioxide < 300 & 
+                       quality.bucket != is.na(quality.bucket)),
+       aes(x = total.sulfur.dioxide, fill = quality.bucket)) +
+  geom_density() +
+  facet_grid(.~quality.bucket) +
+  xlab("total.sulfur.dioxide (mg/dm^3)") +
+  mytheme
+
+grid.arrange(den.sulfur, den.sugar, ncol = 2)
+
+```
+
+####通过绘图可以发现，不同quality评分的葡萄酒中的 sulfur.dioxide 和 residual.sugar密度曲线的图形相似，可以判断作为主要变量的sulfur.dioxide 和 residual.sugar 对于quality评分的影响并不大
+
+```{r echo = FALSE }
+  den.chlorides <- ggplot(data = subset(whitewine,quality.bucket != is.na(quality.bucket)),    aes(x = chlorides, fill = quality.bucket)) +
+  xlim(0, 0.1) +
+  geom_density() +
+  facet_grid(.~quality.bucket) + 
+  xlab("chlorides (g/dm^3)") +
+  mytheme
+
+  den.sulphates <- ggplot(data = subset(whitewine,quality.bucket != is.na(quality.bucket)), 
+         aes(x = sulphates, fill = quality.bucket)) +
+  geom_density() +
+  facet_grid(.~quality.bucket) +
+  xlab("sulphates (g/dm^3)") +
+  mytheme
+  
+  grid.arrange(den.chlorides, den.sulphates, ncol = 1 )
+
+```
+
+####不同质量评分的葡萄酒的杂质的含量及分布几乎一致，说明杂质对于葡萄酒评分的影响不大。
+
+
+
+## Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+####葡萄酒的是由葡萄汁发酵而成的，葡萄汁中有大量的糖分，在发酵过程中酵母菌将其转化为酒精。所以发酵越充分，转化越完全，成品中酒精越多，糖就越少。 sulfur dioxide 起到一个氧化剂的作用，氧化剂的含量是否会影响发酵的效率是关注的问题。
+
+####在不同质量评分中葡萄酒中杂质的含量及分布近乎一致，说明杂志含量对评分影响不大。
+
+### Were there any interesting or surprising interactions between features?
+
+####在低质量评分的葡萄酒中，也存在大量样本的二氧化硫含量小于高质量评分的葡萄酒的二氧化硫含量，与了解到的背景知识（二氧化硫含量越低，葡萄酒质量越好）相违背，可能是由于生产者进行了二氧化硫的吸附处理造成的。
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+####NO，暂时没有好的建模思路。
+
+## Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+  ggplot(aes(x= total.sulfur.dioxide), data = whitewine) + 
+  geom_histogram(binwidth = 2) +
+  ggtitle("Distribution of total.sulfur.dioxide") +
+  xlab("total.sulfur.dioxide (mg/dm^3)") +
+  mytheme
+```
+
+### Description One
+####total.sulfur.dioxide  大部分的白葡萄酒总二氧化硫含量位于100-200的区间范围内(1st.Q 值为108， 3rd.Q值为167），并且接近正态分布。
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+ggplot(aes(x = quality.bucket, y = alcohol), 
+      data = subset(whitewine, quality.bucket != is.na(quality.bucket))) +
+  geom_boxplot(fill = "cornflowerblue", color = "black", notch = TRUE) +
+  geom_rug(side = "1", color = "black")  + 
+  xlab("quality ( score between 0 and 10)") +
+  ylab("alcohol (% by volume)") +
+  ggtitle("alcohol 与quality 关系") + #在图形的侧边创建地毯图
+  mytheme
+
+```
+
+### Description Two
+####箱形图验证酒精的含量与葡萄酒质量评级之间的关系
+####近似的回归曲线斜率为正值，表示酒精含量与quality之间存在正相关的关系，能够利用酒精含量粗略评估葡萄酒的质量。
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+ggplot(data = subset(whitewine, residual.sugar < 30 & total.sulfur.dioxide < 300 & 
+                       quality.bucket != is.na(quality.bucket)), 
+       aes(x = residual.sugar, y = total.sulfur.dioxide)) +
+  facet_grid(.~quality.bucket) +
+  geom_point(alpha = 1/5) +
+  xlab("residual.sugar (g/dm^3)") +
+  ggtitle("三个主要变量之间的关系") +
+  mytheme
+  grid.arrange(den.chlorides, den.sulphates, ncol = 1 )
+```
+
+### Description Three
+
+
+通过绘图可以发现，不同quality评分的葡萄酒中的 sulfur.dioxide 和 residual.sugar密度曲线的图形相似，可以判断作为主要变量的sulfur.dioxide 和 residual.sugar 对于quality评分的影响并不大
+------
+
+## Reflection
+
+分析中遇到的主要困难在于多变量分析时无法抓住重点，在参考示例中，有多个orderd variable， 可以方便的依据ordered variable对数据集进行分类，进行多变量的分析。但是白葡萄酒中并不存在ordered variable 变量，所有变量都是连续变量，所以需要自己发现变量之间的潜在联系。
+
+##我在哪个阶段取得了成功？ ：
+
+发现了一个surprising data, total.sulfur.dioxide 与酒精的pH值的相关系数竟然为0,这个结果和sulfur dioxide 溶于水会显酸性明显不符，而且相关系数为0也很少见。这地点发现让我察觉到了通过对数据进行分析整理确实会得到一些暗含的有趣的结论。
+
+在修改2.0的作业中，一开始就将数据分为了主要成分，杂质，评价指标三类，下面的分析都基于这三个不同类型的数据展开，容易打开思路，并且在单变量分析结果的基础上展开双变量分析和多变量分析使得分析更加合理。
+
+##将来工作中还可以通过哪些方式使分析更丰富？：
+
+尽可能的对数据进行一些背景的了解，比如quality变量的各个数值是根据什么标准来定义的，sulfur dioxide对于葡萄酒有什么样的作用。对于图像的处理应该更加精细，坐标轴，图例，图表标题的相关内容都需要进行清楚的标注，便于以后的进一步分析理解。
+
+##参考
+###《R语言实战》 ggplot2文档

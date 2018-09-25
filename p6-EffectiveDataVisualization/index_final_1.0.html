@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>   
+    
+    <title>泰坦尼克号数据分析</title>
+   
+    <style>
+
+      div.buttons div {                   
+        padding: 10px;
+        margin: 10px;
+        color: black;
+        background-color: rgb(251, 201, 127);
+      }
+
+      div.buttons {
+        position: fixed;
+        top: 250px;
+        right: 100px;
+      }
+     
+      h1 {
+        text-align: center;
+        color: black;
+      }
+      
+      h2 {
+        text-align: center;
+        color: black;
+      } 
+    </style>
+    
+    <script type="text/javascript">
+       function draw(data) {
+            
+            /*
+              D3.js setup code
+            */
+      
+                "use strict";
+                var margin = 75,
+                    width = 1200 - margin,
+                    height = 450 - margin;
+
+                var svg = d3.select("body")
+                          .append("svg")
+                          .attr("width", width + margin)
+                          .attr("height", height + margin)
+                          .append('g')
+                          .attr('class','chart');
+                var button_name = ['All','Sex'];
+                
+            /*
+              Dimple.js Chart construction code
+            */   
+                
+                // 创建图表的函数
+                function create(select_chart){
+                      var chart1 = svg.selectAll('*').remove(); 
+                      if (select_chart==="Sex")
+                      {
+                        var tag = 1;      //选择sex的标识变量
+                      }
+      
+                      if (select_chart==="All")
+                      {
+                        var tag = 0;      //选择All的标识变量
+                      }
+                      chart1 = update(data,tag);  //调用更新图表函数
+                      chart1.assignColor('Died', "red", "red",0.7);
+                      chart1.assignColor('Survived', "green","green", 0.8);       
+                      chart1.draw();  
+                }
+                //更新图表函数
+                function update(data,tag) {
+                      var myChart1 = new dimple.chart(svg, data);   
+                      myChart1.setBounds(165, 60, 1000, 330);  
+                      if(tag===1)    
+                      {
+                        var x = myChart1.addCategoryAxis("x", ["Class","Sex"]); 
+                         x.addOrderRule(["Class 1","Class 2","Class 3"]); //X轴分类的排序
+                      }
+                      if(tag===0)
+                      {
+                        var x = myChart1.addCategoryAxis("x", "Class");   
+                        x.addOrderRule(["Class 1","Class 2","Class 3"]); //X轴分类的排序
+                      }
+                      myChart1.addLegend(1000, 10, 1100, 100, "left");  
+                      myChart1.addPctAxis("y", "Pct");  
+                      myChart1.addMeasureAxis("z", "Count"); 
+                      var mySeries = myChart1.addSeries('Survival', dimple.plot.bar);
+                      mySeries.addOrderRule(["Survived","Died"])
+
+                      mySeries.afterDraw = function (shape, data) 
+                      {
+      
+                          var s = d3.select(shape),
+                          rect = 
+                          {
+                              x: parseFloat(s.attr("x")),
+                              y: parseFloat(s.attr("y")),
+                              width: parseFloat(s.attr("width")),
+                              height: parseFloat(s.attr("height"))
+                          };
+                         
+                          if (rect.height >= 8) 
+                          {
+                            svg.append("text")
+                              .attr("x", rect.x + rect.width / 2)
+                              .attr("y", rect.y + rect.height / 2 + 3.5)
+                              .style("text-anchor", "middle")
+                              .style("font-size", "20px")
+                              .style("font-family", "sans-serif")
+                              .style("opacity", 0.6)
+                              .text(data.yValue);
+                          }
+                        };
+
+                      return myChart1
+                }
+                var myChart = new dimple.chart(svg, data);
+                
+                // 创建初始图形
+                create('All')
+      
+                //创建按钮
+                var buttons = d3.select("body")
+                                 .append("div")
+                                 .attr("class", "buttons")
+                                 .selectAll("div")
+                                 .data(button_name)
+                                 .enter()
+                                 .append("div")
+                                 .text(function(d) {
+                                 return d;
+                                });
+                //定义按钮被点击时候的动作以及按钮的属性
+                buttons.on("click", function(d) 
+                            {
+                              d3.select(".buttons")
+                                .selectAll("div")
+                                .transition()  
+                                .style("background", "rgb(251, 201, 127)"); 
+                                create(d);  
+                            }
+                          );
+       }
+   
+    </script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>泰坦尼克号数据可视化</h1>
+        <h2>一起通过数据来探索泰坦尼克号海难中人们的生死与船舱级别、性别之间的联系</h2>
+      </div>
+    </header>
+        <script type="text/javascript">
+          d3.csv("titanic_data.csv", draw); 
+        </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+github网站
+周志华《机器学习》
+优达学城课后论坛
+sklearn官方文档
+coursera 机器学习课程
